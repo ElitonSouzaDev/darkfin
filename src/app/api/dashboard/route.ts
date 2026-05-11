@@ -13,25 +13,43 @@ export async function GET(req: NextRequest) {
   const year = now.getFullYear()
   const month = now.getMonth() + 1
 
+  // ── 1. Busca transações e garante entradas do mês atual (2 queries) ──────
   const transactions = await prisma.transaction.findMany({ where: { userId: session.user.id } })
 
-  // Ensure current month entries exist
-  for (const tx of transactions) {
-    if (!shouldIncludeTransaction(tx, year, month)) continue
-    const installmentNumber = tx.recurrenceType === 'installment'
-      ? calculateInstallmentNumber(tx.startDate, year, month) : null
-    await prisma.monthlyEntry.upsert({
-      where: { transactionId_year_month: { transactionId: tx.id, year, month } },
-      create: { userId: session.user.id, transactionId: tx.id, year, month, amount: tx.amount, installmentNumber },
-      update: {},
+  const upserts = transactions
+    .filter(tx => shouldIncludeTransaction(tx, year, month))
+    .map(tx => {
+      const installmentNumber = tx.recurrenceType === 'installment'
+        ? calculateInstallmentNumber(tx.startDate, year, month) : null
+      return prisma.monthlyEntry.upsert({
+        where: { transactionId_year_month: { transactionId: tx.id, year, month } },
+        create: { userId: session.user.id, transactionId: tx.id, year, month, amount: tx.amount, installmentNumber },
+        update: {},
+      })
     })
-  }
+  await Promise.all(upserts)
 
-  const currentEntries = await prisma.monthlyEntry.findMany({
-    where: { userId: session.user.id, year, month },
-    include: { transaction: true },
+  // ── 2. Busca entradas do mês atual + histórico dos últimos 6 meses EM UMA query ──
+  const historyMonths = Array.from({ length: 6 }, (_, i) => {
+    const d = subMonths(now, 5 - i)
+    return { year: d.getFullYear(), month: d.getMonth() + 1, label: d.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }) }
   })
 
+  const [currentEntries, historyEntries] = await Promise.all([
+    prisma.monthlyEntry.findMany({
+      where: { userId: session.user.id, year, month },
+      include: { transaction: true },
+    }),
+    prisma.monthlyEntry.findMany({
+      where: {
+        userId: session.user.id,
+        OR: historyMonths.map(m => ({ year: m.year, month: m.month })),
+      },
+      include: { transaction: { select: { type: true } } },
+    }),
+  ])
+
+  // ── 3. Processa em memória (zero queries adicionais) ─────────────────────
   const totalIncome = currentEntries.filter(e => e.transaction.type === 'income').reduce((s, e) => s + e.amount, 0)
   const totalExpenses = currentEntries.filter(e => e.transaction.type === 'expense').reduce((s, e) => s + e.amount, 0)
   const pendingIncome = currentEntries.filter(e => e.transaction.type === 'income' && !e.isDone).reduce((s, e) => s + e.amount, 0)
@@ -39,24 +57,15 @@ export async function GET(req: NextRequest) {
   const pendingCount = currentEntries.filter(e => !e.isDone).length
   const doneCount = currentEntries.filter(e => e.isDone).length
 
-  // Last 6 months history
-  const monthlyHistory = []
-  for (let i = 5; i >= 0; i--) {
-    const d = subMonths(now, i)
-    const y = d.getFullYear()
-    const m = d.getMonth() + 1
-    const entries = await prisma.monthlyEntry.findMany({
-      where: { userId: session.user.id, year: y, month: m },
-      include: { transaction: true },
-    })
-    monthlyHistory.push({
-      label: d.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }),
+  const monthlyHistory = historyMonths.map(({ year: y, month: m, label }) => {
+    const entries = historyEntries.filter(e => e.year === y && e.month === m)
+    return {
+      label,
       income: entries.filter(e => e.transaction.type === 'income').reduce((s, e) => s + e.amount, 0),
       expenses: entries.filter(e => e.transaction.type === 'expense').reduce((s, e) => s + e.amount, 0),
-    })
-  }
+    }
+  })
 
-  // Expense by category (current month)
   const categoryMap: Record<string, number> = {}
   currentEntries.filter(e => e.transaction.type === 'expense').forEach(e => {
     categoryMap[e.transaction.category] = (categoryMap[e.transaction.category] ?? 0) + e.amount

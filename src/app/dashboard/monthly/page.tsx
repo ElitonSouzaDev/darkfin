@@ -167,40 +167,46 @@ export default function MonthlyPage() {
         </div>
       </Card>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <Card delay={0.05} className="text-center">
-          <TrendingUp className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
-          <p className="text-xs text-gray-500 mb-1">Receitas</p>
-          <p className="text-sm font-bold text-emerald-400">{formatCurrency(doneIncome)}</p>
-          <p className="text-xs text-gray-600">de {formatCurrency(totalIncome)}</p>
-        </Card>
-        <Card delay={0.1} className="text-center">
-          <TrendingDown className="w-5 h-5 text-red-400 mx-auto mb-1" />
-          <p className="text-xs text-gray-500 mb-1">Despesas</p>
-          <p className="text-sm font-bold text-red-400">{formatCurrency(doneExpenses)}</p>
-          <p className="text-xs text-gray-600">de {formatCurrency(totalExpenses)}</p>
-        </Card>
-        <Card delay={0.15} className="text-center">
-          <Wallet className="w-5 h-5 text-blue-400 mx-auto mb-1" />
-          <p className="text-xs text-gray-500 mb-1">Progresso</p>
-          <p className="text-sm font-bold text-white">{pct}%</p>
-          <p className="text-xs text-gray-600">{doneCount}/{total} itens</p>
-        </Card>
-      </div>
+      {/* Summary — card único responsivo */}
+      <Card delay={0.05} className="mb-6">
+        <div className="grid grid-cols-3 divide-x divide-dark-border mb-4">
+          <div className="text-center pr-4">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+              <p className="text-xs text-gray-500">Receitas</p>
+            </div>
+            <p className="text-sm font-bold text-emerald-400">{formatCurrency(doneIncome)}</p>
+            <p className="text-[11px] text-gray-600 mt-0.5">de {formatCurrency(totalIncome)}</p>
+          </div>
+          <div className="text-center px-4">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+              <p className="text-xs text-gray-500">Despesas</p>
+            </div>
+            <p className="text-sm font-bold text-red-400">{formatCurrency(doneExpenses)}</p>
+            <p className="text-[11px] text-gray-600 mt-0.5">de {formatCurrency(totalExpenses)}</p>
+          </div>
+          <div className="text-center pl-4">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Wallet className="w-3.5 h-3.5 text-blue-400" />
+              <p className="text-xs text-gray-500">Progresso</p>
+            </div>
+            <p className="text-sm font-bold text-white">{pct}%</p>
+            <p className="text-[11px] text-gray-600 mt-0.5">{doneCount}/{total} itens</p>
+          </div>
+        </div>
 
-      {/* Progress */}
-      <Card delay={0.2} className="mb-6">
-        <div className="flex justify-between text-xs text-gray-500 mb-2">
+        {/* Progress bar */}
+        <div className="flex justify-between text-xs text-gray-600 mb-1.5">
           <span>{doneCount} concluídos</span>
           <span>{total - doneCount} pendentes</span>
         </div>
-        <div className="w-full bg-dark-border rounded-full h-3">
+        <div className="w-full bg-dark-border rounded-full h-2.5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="h-3 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-lg shadow-emerald-500/30"
+            className="h-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-lg shadow-emerald-500/30"
           />
         </div>
       </Card>

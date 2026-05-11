@@ -171,49 +171,61 @@ export default function TransactionsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ delay: i * 0.03 }}
-                className={`bg-dark-card border rounded-2xl p-4 flex items-center gap-4 transition-colors ${
+                className={`bg-dark-card border rounded-2xl p-4 transition-colors ${
                   t.isActive ? 'border-dark-border hover:border-emerald-500/20' : 'border-dark-border/50 opacity-60'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg ${
-                  t.type === 'income' ? 'bg-emerald-500/15' : 'bg-red-500/15'
-                }`}>
-                  {t.type === 'income' ? '↑' : '↓'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-white">{t.name}</p>
-                    <Badge variant={t.type === 'income' ? 'green' : 'red'}>
-                      {t.type === 'income' ? 'Receita' : 'Despesa'}
-                    </Badge>
-                    <Badge variant="gray">{getRecurrenceLabel(t.recurrenceType)}</Badge>
-                    {t.recurrenceType === 'installment' && (
-                      <Badge variant="blue">{t.totalInstallments}x</Badge>
-                    )}
-                    {!t.isActive && <Badge variant="gray">Inativo</Badge>}
+                {/* Linha principal */}
+                <div className="flex items-start gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base mt-0.5 ${
+                    t.type === 'income' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'
+                  }`}>
+                    {t.type === 'income' ? '↑' : '↓'}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {getCategoryLabel(t.category)} · Vence dia {t.dueDay} · desde {formatDate(t.startDate)}
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className={`text-lg font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {formatCurrency(t.amount)}
-                  </p>
-                  {t.recurrenceType === 'installment' && (
-                    <p className="text-xs text-gray-600">/parcela</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => toggleActive(t)} className="p-2 rounded-lg text-gray-500 hover:text-gray-300 transition-colors" title={t.isActive ? 'Desativar' : 'Ativar'}>
-                    {t.isActive ? <ToggleRight className="w-5 h-5 text-emerald-400" /> : <ToggleLeft className="w-5 h-5" />}
-                  </button>
-                  <button onClick={() => openEdit(t)} className="p-2 rounded-lg text-gray-500 hover:text-blue-400 transition-colors">
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => setDeleteId(t.id)} className="p-2 rounded-lg text-gray-500 hover:text-red-400 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white leading-tight">{t.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {getCategoryLabel(t.category)} · dia {t.dueDay}
+                      <span className="hidden sm:inline"> · desde {formatDate(t.startDate)}</span>
+                    </p>
+                    {/* Badges numa linha separada */}
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                      <Badge variant={t.type === 'income' ? 'green' : 'red'}>
+                        {t.type === 'income' ? 'Receita' : 'Despesa'}
+                      </Badge>
+                      <Badge variant="gray">{getRecurrenceLabel(t.recurrenceType)}</Badge>
+                      {t.recurrenceType === 'installment' && (
+                        <Badge variant="blue">{t.totalInstallments}x</Badge>
+                      )}
+                      {!t.isActive && <Badge variant="gray">Inativo</Badge>}
+                    </div>
+                  </div>
+
+                  {/* Valor + ações */}
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <p className={`text-base font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {formatCurrency(t.amount)}
+                    </p>
+                    {t.recurrenceType === 'installment' && (
+                      <p className="text-[10px] text-gray-600 -mt-1.5">/parcela</p>
+                    )}
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={() => toggleActive(t)}
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 transition-colors"
+                        title={t.isActive ? 'Desativar' : 'Ativar'}
+                      >
+                        {t.isActive ? <ToggleRight className="w-4 h-4 text-emerald-400" /> : <ToggleLeft className="w-4 h-4" />}
+                      </button>
+                      <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-gray-500 hover:text-blue-400 transition-colors">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => setDeleteId(t.id)} className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             ))}
