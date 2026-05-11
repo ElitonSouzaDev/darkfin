@@ -8,24 +8,15 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        email: { label: 'Usuário', type: 'text' },
+        email: { label: 'E-mail', type: 'email' },
         password: { label: 'Senha', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        let user = await prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         })
-
-        // Auto-create admin on first login attempt
-        if (!user && credentials.email === 'admin') {
-          const hashed = await bcrypt.hash('admin', 10)
-          user = await prisma.user.create({
-            data: { name: 'Administrador', email: 'admin', password: hashed },
-          })
-        }
-
         if (!user) return null
 
         const ok = await bcrypt.compare(credentials.password, user.password)

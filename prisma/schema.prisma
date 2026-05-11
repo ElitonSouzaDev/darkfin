@@ -9,13 +9,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
+  password             String
+  avatar               String?
+  plan                 String    @default("free")
+  planExpiresAt        DateTime?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   transactions   Transaction[]
   monthlyEntries MonthlyEntry[]

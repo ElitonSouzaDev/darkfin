@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Filter } from 'lucide-react'
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Filter, Crown } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Input'
@@ -12,6 +13,7 @@ import {
   formatCurrency, formatDate, getCategoryLabel, getRecurrenceLabel,
   INCOME_CATEGORIES, EXPENSE_CATEGORIES,
 } from '@/lib/utils'
+import { usePlan } from '@/hooks/usePlan'
 import toast from 'react-hot-toast'
 
 interface Transaction {
@@ -34,7 +36,11 @@ const emptyForm = {
   dueDay: '1', startDate: new Date().toISOString().slice(0, 10),
 }
 
+const FREE_LIMIT = 10
+
 export default function TransactionsPage() {
+  const router = useRouter()
+  const plan = usePlan()
   const [items, setItems] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -54,7 +60,10 @@ export default function TransactionsPage() {
 
   useEffect(() => { load() }, [])
 
+  const atFreeLimit = plan === 'free' && items.length >= FREE_LIMIT
+
   function openAdd() {
+    if (atFreeLimit) { router.push('/dashboard/premium'); return }
     setEditing(null)
     setForm(emptyForm)
     setModalOpen(true)
@@ -87,6 +96,12 @@ export default function TransactionsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+      if (r.status === 403) {
+        toast.error('Limite atingido. Faça upgrade para Premium.')
+        setModalOpen(false)
+        router.push('/dashboard/premium')
+        return
+      }
       if (!r.ok) { toast.error('Erro ao salvar'); return }
       toast.success(editing ? 'Atualizado!' : 'Transação criada!')
       setModalOpen(false)
@@ -122,6 +137,34 @@ export default function TransactionsPage() {
   return (
     <div>
       <Header title="Transações" subtitle="Gerencie suas receitas e despesas" />
+
+      {/* Free limit banner */}
+      {plan === 'free' && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 mb-4 border ${
+            atFreeLimit
+              ? 'bg-red-500/10 border-red-500/30'
+              : 'bg-amber-500/8 border-amber-500/20'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Crown className={`w-4 h-4 flex-shrink-0 ${atFreeLimit ? 'text-red-400' : 'text-amber-400'}`} />
+            <p className={`text-xs font-medium ${atFreeLimit ? 'text-red-300' : 'text-amber-300'}`}>
+              {atFreeLimit
+                ? `Limite atingido (${items.length}/${FREE_LIMIT}). Faça upgrade para adicionar mais.`
+                : `Plano gratuito: ${items.length}/${FREE_LIMIT} transações`}
+            </p>
+          </div>
+          <button
+            onClick={() => router.push('/dashboard/premium')}
+            className="text-xs font-semibold text-amber-400 hover:text-amber-300 whitespace-nowrap transition-colors"
+          >
+            Ver Premium →
+          </button>
+        </motion.div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
