@@ -3,9 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+  // Para produção (Vercel + Neon), trocar para:
+  // provider  = "postgresql"
+  // url       = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -13,6 +16,7 @@ model User {
   name      String
   email     String   @unique
   password  String
+  avatar    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
