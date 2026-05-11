@@ -71,7 +71,7 @@ export default function TransactionsPage() {
       recurrenceType: t.recurrenceType,
       totalInstallments: t.totalInstallments ? String(t.totalInstallments) : '',
       dueDay: String(t.dueDay),
-      startDate: new Date(t.startDate).toISOString().slice(0, 10),
+      startDate: String(t.startDate).slice(0, 10),
     })
     setModalOpen(true)
   }
