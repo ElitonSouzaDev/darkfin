@@ -34,8 +34,14 @@ export default function PremiumPage() {
     setLoading(true)
     try {
       const r = await fetch('/api/checkout', { method: 'POST' })
-      const data = await r.json()
+      const text = await r.text()
+      if (!text) { alert('Erro interno no servidor. Tente novamente.'); return }
+      const data = JSON.parse(text)
+      if (data.error) { alert(`Erro: ${data.error}`); return }
       if (data.url) window.location.href = data.url
+    } catch (err) {
+      alert('Erro ao conectar com o servidor de pagamento.')
+      console.error(err)
     } finally {
       setLoading(false)
     }
