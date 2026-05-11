@@ -12,6 +12,11 @@ export function formatCurrency(value: number) {
 }
 
 export function formatDate(date: Date | string) {
+  // Parse "YYYY-MM-DD" strings as local date to avoid UTC offset shifting the day
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+    const [y, m, d] = date.slice(0, 10).split('-').map(Number)
+    return format(new Date(y, m - 1, d), 'dd/MM/yyyy', { locale: ptBR })
+  }
   return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR })
 }
 
